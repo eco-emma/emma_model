@@ -5,11 +5,11 @@
 #SBATCH --partition=adamw
 #SBATCH --job-name "EMMA model slurm_verbose.sbatch"
 #SBATCH --nodes=1
-#SBATCH --ntasks=1
+#SBATCH --ntasks=16
 #SBATCH --mem=160G
 #SBATCH  -C INTEL
 #SBATCH --time=240:00:00
-#SBATCH --mail-user=bmaitner@gmail.com
+#SBATCH --mail-user=adamw@buffalo.edu
 #SBATCH --mail-type=begin
 #SBATCH --mail-type=end
 #SBATCH -o emma_model_verbose.out
