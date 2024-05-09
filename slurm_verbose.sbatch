@@ -21,7 +21,7 @@ export APPTAINER_CACHEDIR="/scratch/"$USER"/apptainer"
 export SIF_PATH=$PROJECT_FOLDER"/apptainer"
 export SIF_FILE="AdamWilsonLab-emma_docker-latest.sif"
 export APPTAINER_CACHEDIR="/panasas/scratch/grp-adamw/"$USER"/apptainer"
-export EMMA_HOME=$PROJECT_FOLDER"/users/"$USER"/emma_model"
+export EMMA_HOME=$PROJECT_FOLDER"/emma_model"
 
 # set singularity cache and tmp directories to the same as apptainer
 # needed because CCR is still using singularity and it will use these directories
