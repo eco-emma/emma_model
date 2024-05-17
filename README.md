@@ -11,11 +11,12 @@
     2. Select your branch `git checkout dev-adamw` (or similar, you may need to create the branch first)
 5. change directory into the repo e.g. `cd /projects/academic/adamw/users/$USER/repos/emma_model
 6. Pull to get the most recent code with `git pull`
-7. 
+   
 
 
 ## Useful commands
 
+Set github credentials `gitcreds::gitcreds_set()` and paste in the PAT from github
 
 Query jobs pending or running in my group: `squeue -p adamw -M faculty`
 
