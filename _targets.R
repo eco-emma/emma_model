@@ -76,7 +76,7 @@ print("Setting options")
 # Testing and training time windows
   print("setting time windows")
   training_window=c("2000-01-01","2022-12-31")
-  testing_window=c("2023-01-01","2024-1-1")
+  testing_window=c("2023-01-01","2023-12-31")
   #predicting_window=c("2000-01-01",as.character(Sys.Date()))
   #predicting_window=c("2022-01-01",as.character(Sys.Date()))
   #predicting_window=c("2023-01-01",as.character(Sys.Date()))
