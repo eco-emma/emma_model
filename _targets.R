@@ -227,7 +227,7 @@ list(
               create_spatial_outputs(envdata = envdata,
                                      envvars = envvars,
                                      model_results = model_results,
-                                     data_training =  data_training)),
+                                     data_training =  data_training))#,
   #,
 
    # tar_target(name = release_outputs,
