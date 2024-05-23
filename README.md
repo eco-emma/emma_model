@@ -14,7 +14,11 @@
    
 
 ## Steps to run in UB OnDemand
-
+1. go to https://ubvdi.buffalo.edu/portal/webclient/index.html
+2. Open remote desktop
+3. Open chrome
+4. go to https://ubvdi.buffalo.edu/portal/webclient/index.html
+5. Start RStudio instance
 
 ## Useful commands
 
