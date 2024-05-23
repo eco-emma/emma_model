@@ -14,7 +14,7 @@
    
 
 ## Steps to run in UB OnDemand
-1. go to https://ubvdi.buffalo.edu/portal/webclient/index.html
+1. Open a VDI connection (https://www.buffalo.edu/ubit/services/remote-vdi-and-secureremote-vdi/remote-vdi.html) such as going to https://ubvdi.buffalo.edu/portal/webclient/index.html
 2. Open remote desktop
 3. Open chrome
 4. go to https://ubvdi.buffalo.edu/portal/webclient/index.html
