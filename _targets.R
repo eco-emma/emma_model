@@ -3,10 +3,9 @@ print("Loading libraries")
   library(stantargets)
   library(targets)
   library(tarchetypes)
+  library(geotargets)
   library(tidyverse)
-  library(arrow)
-  library(piggyback)
-library(bayesplot)
+  library(qs2)
   #library(plotly)
   # library(leaflet)
   #library(rnoaa)
@@ -28,16 +27,15 @@ print("Attempting to install needed packages")
 
 
 print("Sourcing files")
-  source("scratch_code/report_generator.R") #this should be moved
   source("https://raw.githubusercontent.com/AdamWilsonLab/emma_envdata/main/R/robust_pb_download.R")
   # source all files in R folder
   #  lapply(list.files("R",pattern="[.]R",full.names = T), source)
 
-    list.files("R",pattern="[.]R",full.names = T)%>%
-    stringr::str_subset(c("R/detect_anomalies.R"), negate=TRUE)%>%
-      stringr::str_subset(c("R/predict_the_future.R"), negate=TRUE)%>%
-      stringr::str_subset(c("R/predict_from_model.R"), negate=TRUE)%>%
-      stringr::str_subset(c("R/predict_from_model_draws.R"), negate=TRUE)%>%
+    list.files("R",pattern="[.]R",full.names = T)|>
+    stringr::str_subset(c("R/detect_anomalies.R"), negate=TRUE)|>
+      stringr::str_subset(c("R/predict_the_future.R"), negate=TRUE)|>
+      stringr::str_subset(c("R/predict_from_model.R"), negate=TRUE)|>
+      stringr::str_subset(c("R/predict_from_model_draws.R"), negate=TRUE)|>
     lapply( source)
 
 print("Setting options")
@@ -46,7 +44,7 @@ print("Setting options")
 
   tar_option_set(packages = c("piggyback","cmdstanr", "posterior", "bayesplot", "tidyverse",
                               "stringr","knitr","sf","stars","units","arrow","lubridate","stantargets",
-                              "doParallel","raster"),
+                              "doParallel","raster","terra","geotargets"),
                  deployment="main")
 
 #print("Setting env")
@@ -76,7 +74,7 @@ print("Setting options")
 # Testing and training time windows
   print("setting time windows")
   training_window=c("2000-01-01","2022-12-31")
-  testing_window=c("2023-01-01","2023-12-31")
+  testing_window=c("2024-01-01","2025-12-31")
   #predicting_window=c("2000-01-01",as.character(Sys.Date()))
   #predicting_window=c("2022-01-01",as.character(Sys.Date()))
   #predicting_window=c("2023-01-01",as.character(Sys.Date()))
@@ -175,7 +173,6 @@ list(
       predict=1)
   ),
 
-  #tried mcmc - 500 samples in ~12 hours
   tar_stan_vb(
     model,
     stan_files = "postfire_season2.stan",
@@ -195,6 +192,7 @@ list(
     #format="parquet"
   ),
 #
+#     tried mcmc - 500 samples in ~12 hours
 #     tar_stan_mcmc(name = model_mcmc,
 #                   stan_files = "postfire_season2.stan",
 #                   data = stan_data,
