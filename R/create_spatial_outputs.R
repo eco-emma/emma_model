@@ -20,7 +20,7 @@ create_spatial_outputs <- function(envdata, envvars, model_results,data_training
   # get the template raster to align the predictions
   template="data/template.tif"
   if(!file.exists(template))
-    download.file("https://github.com/AdamWilsonLab/emma_envdata/releases/download/processed_static/template.tif",destfile=template)
+    download.file("https://github.com/eco-emma/emma_envdata/releases/download/processed_static/template.tif",destfile=template)
   domain=raster(template)
 
   vmat=left_join(data.frame(cellID=values(domain)),
@@ -61,7 +61,7 @@ create_spatial_outputs <- function(envdata, envvars, model_results,data_training
 #   # get the template raster to align the predictions
 #   template="data/template.tif"
 #   if(!file.exists(template))
-#     download.file("https://github.com/AdamWilsonLab/emma_envdata/releases/download/processed_static/template.tif",destfile=template)
+#     download.file("https://github.com/eco-emma/emma_envdata/releases/download/processed_static/template.tif",destfile=template)
 #   domain=raster(template)
 #
 #   vmat=left_join(data.frame(cellID=values(domain)),

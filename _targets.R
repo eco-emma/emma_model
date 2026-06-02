@@ -5,6 +5,7 @@ print("Loading libraries")
   library(tarchetypes)
   library(tidyverse)
   library(arrow)
+  library(qs2)
   library(piggyback)
   #library(plotly)
   # library(leaflet)
@@ -27,24 +28,21 @@ print("Attempting to install needed packages")
 
 
 print("Sourcing files")
-  source("scratch_code/report_generator.R") #this should be moved
-  source("https://raw.githubusercontent.com/AdamWilsonLab/emma_envdata/main/R/robust_pb_download.R")
+  source("https://raw.githubusercontent.com/eco-emma/emma_envdata/main/R/robust_pb_download.R")
   # source all files in R folder
-  #  lapply(list.files("R",pattern="[.]R",full.names = T), source)
-
-    list.files("R",pattern="[.]R",full.names = T)%>%
-    stringr::str_subset(c("R/detect_anomalies.R"), negate=TRUE)%>%
-      stringr::str_subset(c("R/predict_the_future.R"), negate=TRUE)%>%
-    lapply( source)
+  list.files("R", pattern = "[.]R", full.names = TRUE) |>
+    stringr::str_subset("R/detect_anomalies.R", negate = TRUE) |>
+    stringr::str_subset("R/predict_the_future.R", negate = TRUE) |>
+    lapply(source)
 
 print("Setting options")
   options(tidyverse.quiet = TRUE)
   options(clustermq.scheduler = "multicore")
 
-  tar_option_set(packages = c("piggyback","cmdstanr", "posterior", "bayesplot", "tidyverse",
-                              "stringr","knitr","sf","stars","units","arrow","lubridate","stantargets",
-                              "doParallel","raster"),
-                 deployment="main")
+  tar_option_set(packages = c("piggyback", "cmdstanr", "posterior", "bayesplot", "tidyverse",
+                              "stringr", "knitr", "sf", "stars", "units", "arrow", "lubridate",
+                              "stantargets", "doParallel", "raster", "terra", "geotargets", "qs2"),
+                 deployment = "main")
 
 #print("Setting env")
 #Sys.setenv(HOME="/home/rstudio")
@@ -72,8 +70,8 @@ print("Setting options")
 
 # Testing and training time windows
   print("setting time windows")
-  training_window=c("2000-01-01","2014-07-01")
-  testing_window=c("2014-07-01","2022-01-01")
+  training_window=c("2000-01-01","2022-12-31")
+  testing_window=c("2024-01-01","2025-12-31")
   #predicting_window=c("2000-01-01",as.character(Sys.Date()))
   #predicting_window=c("2022-01-01",as.character(Sys.Date()))
   predicting_window=c("2021-01-01","2022-01-01")
@@ -95,13 +93,19 @@ list(
   tar_target(
     envdata_files,
     robust_pb_download(file=NULL,
-                       repo="AdamWilsonLab/emma_envdata",
+                       repo="eco-emma/emma_envdata",
                        dest="data/envdata/",
                        tag="current",
                        show_progress=F,
                        overwrite=F,
                        sleep_time=3),
     format="file"),
+
+  tar_target(
+    stable_data_parquet,
+    make_stable_data_parquet(envdata_files),
+    format = "file"
+  ),
 
   tar_target(long_pixels,
              find_long_records(env_files = envdata_files,
@@ -159,13 +163,13 @@ list(
   #tried mcmc - 500 samples in ~12 hours
   tar_stan_vb(
     model,
-    stan_files = "postfire_season.stan",
+    stan_files = "postfire_season2.stan",
     data = stan_data,
     quiet=T,
     pedantic=F,
     adapt_engaged=F,
     eta=0.11,
-    iter = 1000000, #should be 1000 or more - 100 is just to run quickly - CP converged after 6400
+    iter = 7000, #should be 1000 or more - 100 is just to run quickly - CP converged after 6400
     garbage_collection=T,
     init = 0.5, #list(list(phi = 0.5, tau_sq = 0.1, gamma_tau_sq = 0.1, lambda_tau_sq = 0.1, alpha_tau_sq = 0.1, A_tau_sq = 0.1)),
     tol_rel_obj = 0.001,
@@ -190,7 +194,7 @@ list(
     #               return_draws = FALSE,parallel_chains = 1),
 
    tar_target(model_results,
-              summarize_model_output(model_summary_postfire_season, stan_data, envdata)),
+              summarize_model_output(model_summary_postfire_season2, stan_data, envdata)),
    tar_target(model_prediction,
              summarize_predictions(model_results,stan_data,envdata)),
   tar_target(spatial_outputs,
@@ -274,7 +278,7 @@ tar_stan_vb(
 
   tar_target(
     release_stan_outputs,
-    release_stan_objects(object_names = c("model_summary_postfire_season",
+    release_stan_objects(object_names = c("model_summary_postfire_season2",
                                           "model_w_pred_summary_postfire_season_predict"),
                          tag = "model_output",
                          max_attempts = 10,

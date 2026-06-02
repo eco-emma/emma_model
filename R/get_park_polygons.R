@@ -42,7 +42,7 @@ get_park_polygons <- function(temp_directory = "data/temp/parks",
 
     pb_download(file = "domain.gpkg",
                 tag = "raw_static",
-                repo = "AdamWilsonLab/emma_envdata",
+                repo = "eco-emma/emma_envdata",
                 dest = temp_directory)
 
   # Read domain
@@ -82,7 +82,7 @@ get_park_polygons <- function(temp_directory = "data/temp/parks",
   # update projection
     pb_download(file = "template.tif",
                 dest = temp_directory,
-                repo = "AdamWilsonLab/emma_envdata",
+                repo = "eco-emma/emma_envdata",
                 tag = "processed_static")
 
     template <- terra::rast(file.path(temp_directory,"template.tif"))
