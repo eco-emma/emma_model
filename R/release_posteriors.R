@@ -1,4 +1,4 @@
-release_posteriors<-function(model_results,repo = "AdamWilsonLab/emma_model",tag = tag){
+release_posteriors<-function(model_results,repo = "eco-emma/emma_model",tag = tag){
 library(piggyback)
 
   #Make sure there is a release by attempting to create one.  If it already exists, this will fail

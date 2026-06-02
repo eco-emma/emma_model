@@ -204,7 +204,7 @@ list(
  #            release_posteriors(
  #              model_output,
  #              file="targets/objects/model_results",
- #              repo = "AdamWilsonLab/emma_model",
+ #              repo = "eco-emma/emma_model",
  #              tag = "current")),
 
 # attempts to predict from fitted model ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -288,7 +288,7 @@ tar_stan_vb(
   tar_target(
     release_html,
     robust_pb_upload(files = "index.html",
-                     repo = "AdamWilsonLab/emma_model",
+                     repo = "eco-emma/emma_model",
                      tag = "model_output",
                      max_attempts = 10,
                      sleep_time = 10,

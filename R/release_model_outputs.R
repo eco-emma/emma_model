@@ -17,11 +17,11 @@ release_model_outputs <- function(model_results,
 
   # check/create release
 
-    assets <- pb_list(repo = "AdamWilsonLab/emma_model")
+    assets <- pb_list(repo = "eco-emma/emma_model")
 
     if(!release %in% assets$tag){
 
-      pb_new_release(repo = "AdamWilsonLab/emma_model",
+      pb_new_release(repo = "eco-emma/emma_model",
                      tag = release)
     }
 
@@ -41,7 +41,7 @@ release_model_outputs <- function(model_results,
                        file.path(temp_directory, "spatial_outputs.rds"),
                        file.path(temp_directory, "model_prediction.rds")
                        ),
-              repo = "AdamWilsonLab/emma_model",
+              repo = "eco-emma/emma_model",
               tag = release
               )
 

@@ -1,6 +1,6 @@
 #' @note This version forces overwriting of the files in the release, and uses a lot of GH queries.  Best reserved for cases you expect to fail
 robust_pb_upload <- function(files,
-                             repo="AdamWilsonLab/emma_model",
+                             repo="eco-emma/emma_model",
                              tag,
                              max_attempts = 10,
                              sleep_time = 1,

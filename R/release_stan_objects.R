@@ -33,11 +33,11 @@ release_stan_objects <- function(object_names = c("model_summary_postfire_season
 
   # check/create release
 
-    assets <- pb_list(repo = "AdamWilsonLab/emma_model")
+    assets <- pb_list(repo = "eco-emma/emma_model")
 
       if(!tag %in% assets$tag){
 
-        caught<-tryCatch(pb_new_release(repo = "AdamWilsonLab/emma_model",
+        caught<-tryCatch(pb_new_release(repo = "eco-emma/emma_model",
                        tag = tag),
                  error = function(e) e)
 
@@ -64,7 +64,7 @@ release_stan_objects <- function(object_names = c("model_summary_postfire_season
         robust_pb_upload(file = file.path(temp_directory,
                                           paste(object_names[i],
                                                 ".gz.parquet", sep = "")),
-                  repo = "AdamWilsonLab/emma_model",
+                  repo = "eco-emma/emma_model",
                   tag = tag,
                   max_attempts = max_attempts,
                   sleep_time = sleep_time,
@@ -92,7 +92,7 @@ release_stan_objects <- function(object_names = c("model_summary_postfire_season
       if(raw){
 
       robust_pb_upload(file = file.path("_targets/objects/",object_names[i]),
-                       repo = "AdamWilsonLab/emma_model",
+                       repo = "eco-emma/emma_model",
                        tag = tag,
                        max_attempts = max_attempts,
                        sleep_time = sleep_time,
