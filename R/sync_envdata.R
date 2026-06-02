@@ -1,6 +1,6 @@
 
 
-sync_envdata <- function(repo="AdamWilsonLab/emma_envdata",
+sync_envdata <- function(repo="eco-emma/emma_envdata",
                          path="data/envdata/")  {
 
   # if running on github - delete the data files and get them again

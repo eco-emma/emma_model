@@ -44,3 +44,11 @@ vignettes/*.pdf
 data*
 .DS_Store
 _targets
+
+# Stan compiled binaries (no extension, produced by cmdstanr)
+postfire_season2
+postfire_season_predict2
+postfire_season
+postfire_season_predict
+postfire_ssm
+postfire
