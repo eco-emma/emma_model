@@ -38,16 +38,19 @@ get_park_polygons <- function(temp_directory = "data/temp/parks",
       dir.create(temp_directory, recursive = TRUE)
     }
 
-  # Download domain
+  # Download domain grid from the new static_data release (replaces raw_static/domain.gpkg).
+    domain_tif <- file.path(temp_directory, "domain.tif")
+    piggyback::pb_download(
+      file = "domain.tif",
+      tag = "static_data",
+      repo = "eco-emma/emma_envdata",
+      dest = temp_directory
+    )
 
-    pb_download(file = "domain.gpkg",
-                tag = "raw_static",
-                repo = "eco-emma/emma_envdata",
-                dest = temp_directory)
-
-  # Read domain
-
-    domain <- st_read(file.path(temp_directory, "domain.gpkg"))
+    domain_r <- terra::rast(domain_tif)
+    domain <- sf::st_as_sf(
+      terra::as.polygons(terra::ext(domain_r), crs = terra::crs(domain_r))
+    )
 
   # Match projections
 
@@ -79,13 +82,17 @@ get_park_polygons <- function(temp_directory = "data/temp/parks",
     cn <- cn[which(as.logical(st_intersects(x = cn, y = domain))),]%>%
               st_make_valid()
 
-  # update projection
-    pb_download(file = "template.tif",
-                dest = temp_directory,
-                repo = "eco-emma/emma_envdata",
-                tag = "processed_static")
+  # Align to domain CRS / grid (replaces legacy processed_static/template.tif)
+    if (!file.exists(domain_tif)) {
+      piggyback::pb_download(
+        file = "domain.tif",
+        dest = temp_directory,
+        repo = "eco-emma/emma_envdata",
+        tag = "static_data"
+      )
+    }
 
-    template <- terra::rast(file.path(temp_directory,"template.tif"))
+    template <- terra::rast(domain_tif)
 
     all_pas <-
     st_transform(x = all_pas,

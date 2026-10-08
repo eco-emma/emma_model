@@ -1,30 +1,76 @@
-## Download the most recent release from the emma_envdata
-tidy_dynamic_data <- function(data,date_window) {
+#' Tidy dynamic VI + fire-age observations for the model.
+#'
+#' New emma_envdata contract:
+#' - VI parquet: `vi_modis_YYYYMMDD.parquet` with `pid, date, sensor, value`
+#'   where `value` is **EVI × 100** (decode with `value / 100`).
+#' - Fire age: `fireage_modis_*.parquet` joined on `(pid, date, sensor)`.
+#'
+#' Output keeps historical column names expected by [create_stan_data()]:
+#' `cellID`, `date`, `ndvi` (here: EVI in native [-1, 1]-ish units), `age`,
+#' `firemonth`.
+#'
+#' @param data Static tidy table with a `sample` flag and `cellID`.
+#' @param date_window Length-2 Date vector (start, stop).
+#' @param envdata_files Root envdata directory (default `data/envdata`).
+tidy_dynamic_data <- function(data,
+                              date_window,
+                              envdata_files = "data/envdata") {
+  vi_files <- list.files(
+    file.path(envdata_files, "vi_modis"),
+    pattern = "^vi_modis_.*\\.parquet$",
+    full.names = TRUE
+  )
+  fire_files <- list.files(
+    file.path(envdata_files, "fireage"),
+    pattern = "^fireage_modis_.*\\.parquet$",
+    full.names = TRUE
+  )
 
+  if (!length(vi_files)) {
+    stop("No VI parquet files under ", file.path(envdata_files, "vi_modis"))
+  }
+  if (!length(fire_files)) {
+    stop("No fireage_modis parquet files under ",
+         file.path(envdata_files, "fireage"))
+  }
 
-# Data pre-processing
+  cells_to_keep <- data |>
+    dplyr::filter(.data$sample) |>
+    dplyr::select(cellID) |>
+    dplyr::mutate(pid = as.integer(.data$cellID))
 
-dynfiles <- open_dataset(sources = list.files("data/envdata","dynamic",full=T))
+  start_date <- as.numeric(lubridate::as_date(date_window[1]))
+  stop_date <- as.numeric(lubridate::as_date(date_window[2]))
 
-cells_to_keep<- data %>%
-  dplyr::filter(sample) %>%
-  dplyr::select(cellID)
+  vi_ds <- arrow::open_dataset(sources = vi_files)
+  fire_ds <- arrow::open_dataset(sources = fire_files)
 
-start_date = as.numeric(as_date(date_window[1]))
-stop_date = as.numeric(as_date(date_window[2]))
+  dyndata <- vi_ds |>
+    dplyr::semi_join(cells_to_keep, by = "pid") |>
+    dplyr::filter(date > start_date, date < stop_date) |>
+    dplyr::left_join(
+      fire_ds,
+      by = c("pid", "date", "sensor")
+    ) |>
+    dplyr::collect() |>
+    dplyr::mutate(
+      cellID = as.integer(.data$pid),
+      # EVI packed as integer × 100 (not the legacy NDVI (v/100)-1 encoding).
+      ndvi = .data$value / 100,
+      age = .data$fire_age_days / 365.25,
+      firemonth = dplyr::if_else(
+        is.na(.data$last_burn_date) | .data$last_burn_date == 0,
+        NA_integer_,
+        as.integer(lubridate::month(lubridate::as_date(.data$last_burn_date)))
+      ),
+      date = lubridate::as_date(.data$date)
+    ) |>
+    dplyr::filter(!is.na(.data$ndvi), !is.na(.data$age)) |>
+    dplyr::select(
+      cellID, pid, date, sensor, ndvi, age, firemonth,
+      last_burn_date, fire_age_days, fire_count, fire_source
+    ) |>
+    tibble::as_tibble()
 
-dyndata <- dynfiles  %>%
-  semi_join(cells_to_keep,by="cellID") %>% #keep only pixels in data
-  filter(date>start_date & date<stop_date) %>%
-  collect() %>%
-  pivot_wider(names_from=variable,values_from=value,values_fn=first) %>% #not sure why ages are repeated twice in this
-  mutate(
-        firemonth=ifelse(most_recent_burn_date==0,NA, #use median fire date
-                         month(as_date(most_recent_burn_date))),
-        date=as_date(date),
-        ndvi=(ndvi/100)-1,
-        age=time_since_fire/365.23) %>%  #convert age from days to years
-  as_tibble()
-
-return(dyndata)
+  dyndata
 }

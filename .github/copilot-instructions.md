@@ -5,7 +5,7 @@
 This is the EMMA (Environmental Monitoring & Modeling Application) modeling module - a Bayesian hierarchical model predicting post-fire NDVI recovery in South African fynbos shrublands. The model estimates recovery trajectories as a function of time-since-fire, seasonal effects, and environmental covariates.
 
 **Architecture**: Part of a 4-module pipeline:
-1. [emma_envdata](https://github.com/AdamWilsonLab/emma_envdata) - Environmental data preparation
+1. [emma_envdata](https://github.com/eco-emma/emma_envdata) - Environmental data preparation
 2. **emma_model** (this repo) - Bayesian modeling & change detection
 3. [emma_change_classification](https://github.com/AdamWilsonLab/emma_change_classification) - Classification
 4. [emma_report](https://github.com/AdamWilsonLab/emma_report) - Reporting
@@ -21,19 +21,26 @@ Rscript run.R
 ```
 
 **Key target groups**:
-- **Data download**: `envdata_files` uses `piggyback` to download data from GitHub releases (`emma_envdata` repo)
+- **Data download**: `envdata_files` calls `download_emma_envdata()` for typed releases (`static_data`, `vi_modis_parquet`, `fireage`) into `data/envdata/{static,vi_modis,fireage}/`
+- **Static prep**: `stable_data_parquet` aliases envdata `pid` → `cellID` and extracts `x`/`y` (EPSG:9221)
 - **Data filtering**: `long_pixels` → `envdata` → `data_training` filters pixels with sufficient fire-free periods
 - **Stan data prep**: `create_stan_data()` assembles list for Stan with training/testing splits
-- **Model fitting**: `tar_stan_vb()` runs variational Bayes (VB) inference on [postfire_season.stan](postfire_season.stan)
+- **Model fitting**: `tar_stan_vb()` runs variational Bayes (VB) inference on [postfire_season2.stan](postfire_season2.stan)
 - **Prediction**: `model_w_pred` uses [postfire_season_predict.stan](postfire_season_predict.stan) for new data
 - **Outputs**: `spatial_outputs`, `release_stan_outputs`, `release_html` publish to GitHub releases
 
-**Time windows** (configured in [_targets.R](_targets.R) lines 70-73):
+**Time windows** (configured in [_targets.R](_targets.R)):
 ```r
-training_window = c("2000-01-01","2014-07-01")
-testing_window = c("2014-07-01","2022-01-01")
+training_window = c("2000-01-01","2022-12-31")
+testing_window = c("2024-01-01","2025-12-31")
 predicting_window = c("2021-01-01","2022-01-01")
 ```
+
+**Envdata contract notes**:
+- VI product is **EVI × 100** (`value/100`); Stan column remains named `ndvi` for plumbing
+- Fire age from `fireage_modis_*.parquet` joined on `(pid, date, sensor)`
+- Remnant buffer is in **metres** (e.g. `2000` for a 2 km edge buffer)
+- Covariate columns match `static_covariates.parquet` (CHELSA v2.1 names, `topographic_div`, …)
 
 ## Stan Model Architecture
 
@@ -73,16 +80,16 @@ mu[i] = alpha[pid] + gamma[pid] - gamma[pid]*exp(-(age[i]/lambda[pid])) +
 ## Data Pipeline Patterns
 
 ### Spatial filtering workflow
-1. **Find long records** ([R/find_long_records.R](R/find_long_records.R)): Identifies pixels with sufficient pre/post-fire data
-2. **Tidy static data** ([R/tidy_static_data.R](R/tidy_static_data.R)): Filters by region, remnant distance (2km buffer), samples pixels
-3. **Tidy dynamic data** ([R/tidy_dynamic_data.R](R/tidy_dynamic_data.R)): Filters NDVI time series by date window
+1. **Find long records** ([R/find_long_records.R](R/find_long_records.R)): Identifies pixels with sufficient pre/post-fire data from fireage + VI parquets
+2. **Tidy static data** ([R/tidy_static_data.R](R/tidy_static_data.R)): Filters by region, remnant distance (2000 m buffer), samples pixels
+3. **Tidy dynamic data** ([R/tidy_dynamic_data.R](R/tidy_dynamic_data.R)): Joins EVI + fireage and filters by date window
 4. **Filter training data** ([R/filter_training_data.R](R/filter_training_data.R)): Selects environmental variables (`envvars` target)
 
 ### Environmental variables
-Selected in `envvars` target ([_targets.R](_targets.R) lines 119-132):
-- CHELSA bioclimatic variables (precipitation, temperature)
-- MODIS cloud frequency metrics
-- ALOS topographic diversity
+Selected in `envvars` target ([_targets.R](_targets.R)):
+- CHELSA v2.1 bioclimatic variables (bio05/06/12)
+- MODIS cloud frequency metrics (`MODCF_seasonality_concentration`)
+- NASADEM-derived topographic diversity (`topographic_div`)
 
 **Convention**: Rename covariates using named vector for clarity in outputs.
 
