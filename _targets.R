@@ -28,7 +28,7 @@ print("Attempting to install needed packages")
 
 
 print("Sourcing files")
-  source("https://raw.githubusercontent.com/eco-emma/emma_envdata/main/R/robust_pb_download.R")
+  # Download helper lives locally (emma_envdata no longer ships robust_pb_download.R).
   # source all files in R folder
   list.files("R", pattern = "[.]R", full.names = TRUE) |>
     stringr::str_subset("R/detect_anomalies.R", negate = TRUE) |>
@@ -41,7 +41,8 @@ print("Setting options")
 
   tar_option_set(packages = c("piggyback", "cmdstanr", "posterior", "bayesplot", "tidyverse",
                               "stringr", "knitr", "sf", "stars", "units", "arrow", "lubridate",
-                              "stantargets", "doParallel", "raster", "terra", "geotargets", "qs2"),
+                              "stantargets", "doParallel", "raster", "terra", "geotargets", "qs2",
+                              "gh", "httr"),
                  deployment = "main")
 
 #print("Setting env")
@@ -88,18 +89,17 @@ print("Setting options")
 
 #tar_option_set(debug = "spatial_outputs")
 
-## Download the most recent data release
+## Download the new multi-tag emma_envdata release products
 list(
   tar_target(
     envdata_files,
-    robust_pb_download(file=NULL,
-                       repo="eco-emma/emma_envdata",
-                       dest="data/envdata/",
-                       tag="current",
-                       show_progress=F,
-                       overwrite=F,
-                       sleep_time=3),
-    format="file"),
+    download_emma_envdata(
+      repo = "eco-emma/emma_envdata",
+      dest = "data/envdata",
+      overwrite = FALSE
+    ),
+    format = "file"
+  ),
 
   tar_target(
     stable_data_parquet,
@@ -113,30 +113,28 @@ list(
                                min_years_without_fire = 10,
                                ndvi_prob = 0.8)),
 
-  tar_target(envdata,
-             tidy_static_data(
-               envdata_files,
-               remnant_distance=2, #drop pixels within this distance of remnant edge (km)
-               #region=c(xmin = 18.3, xmax = 19.3, ymin = -34.3, ymax = -33.3), #core
-               region=c(xmin = 0, xmax = 30, ymin = -36, ymax = -20), #whole region
-               #region=c(xmin = 18.301425, xmax = 18.524242, ymin = -34.565951, ymax = -34.055531), #peninsula
-               sample_proportion= sample_proportion,
-               long_pixels=long_pixels)),
+  tar_target(envdata, {
+               # Depend on prepared static parquet (cellID alias + x/y).
+               stable_data_parquet
+               tidy_static_data(
+                 envdata_files,
+                 remnant_distance = 2000, # metres from remnant edge (was 2 km)
+                 #region=c(xmin = 18.3, xmax = 19.3, ymin = -34.3, ymax = -33.3), #core
+                 region = c(xmin = 0, xmax = 30, ymin = -36, ymax = -20), #whole region
+                 #region=c(xmin = 18.301425, xmax = 18.524242, ymin = -34.565951, ymax = -34.055531), #peninsula
+                 sample_proportion = sample_proportion,
+                 long_pixels = long_pixels)
+             }),
 
-  tar_target(envvars,c( #select and possibly rename envvars to be included in model
-#    "Mean_January_Precipitation" = "CHELSA_prec_01_V1.2_land.tif",
-    "Mean_July_Precipitation" =  "CHELSA_prec_07_V1.2_land.tif",
-#    "Soil_pH" = "soil_pH.tif",
-    "Max_Air_Temperature_Warmest" = "CHELSA_bio10_05_V1.2.tif",
-    "Min_Air_Temperature_Coldest" =  "CHELSA_bio10_06_V1.2.tif",
-#    "Mean_Annual_Air_Temperature"="CHELSA_bio10_01_V1.2.tif", #select env vars to use in model
-#    "Mean_Annual_Precipitation"="CHELSA_bio10_12_V1.2.tif",
-#    "Mean_Monthly_Precipitation_In_Driest_Quarter"="CHELSA_bio10_17_V1.2.tif",
-#    "Mean_Annual_Cloud_Frequency"="MODCF_meanannual.tif",
-    "Cloud_Seasonal_Concentration"="MODCF_seasonality_concentration.tif",
-    "Topographic_Diversity"="alos_topodiversity.tif")),
-#    "ALOS_CHILI"="alos_chili.tif",
-#    "ALOS_MTPI"="alos_mtpi.tif")),
+  # Envvar names match static_covariates.parquet (CHELSA v2.1 / MODCF / NASADEM).
+  # Monthly CHELSA precip is no longer published; bio12 stands in for July precip.
+  tar_target(envvars, c(
+    "Mean_Annual_Precipitation" = "CHELSA_bio12_1981-2010_V.2.1",
+    "Max_Air_Temperature_Warmest" = "CHELSA_bio05_1981-2010_V.2.1",
+    "Min_Air_Temperature_Coldest" = "CHELSA_bio06_1981-2010_V.2.1",
+    "Cloud_Seasonal_Concentration" = "MODCF_seasonality_concentration",
+    "Topographic_Diversity" = "topographic_div"
+  )),
   tar_target(
     data_training,
     filter_training_data(envdata,envvars)
@@ -144,12 +142,14 @@ list(
   tar_target(
     dyndata_training,
     tidy_dynamic_data(envdata,
-                      date_window=ymd(training_window))
+                      date_window = ymd(training_window),
+                      envdata_files = envdata_files)
   ),
   tar_target(
     dyndata_testing,
     tidy_dynamic_data(envdata,
-                      date_window=ymd(testing_window))
+                      date_window = ymd(testing_window),
+                      envdata_files = envdata_files)
   ),
   tar_target(
     stan_data,
@@ -198,7 +198,8 @@ list(
    tar_target(model_prediction,
              summarize_predictions(model_results,stan_data,envdata)),
   tar_target(spatial_outputs,
-             create_spatial_outputs(envdata, envvars, model_results, data_training)),
+             create_spatial_outputs(envdata, envvars, model_results, data_training,
+                                    envdata_files = envdata_files)),
   # tar_target(name = release_outputs,
   #            command = release_model_outputs(model_results = model_results,
   #                                            spatial_outputs = spatial_outputs,
@@ -220,15 +221,17 @@ list(
                                max_years_to_first_fire = NULL,
                                min_years_without_fire = NULL,
                                ndvi_prob = 0)),
-  tar_target(envdata_predict,
-             tidy_static_data(
-               envdata_files,
-               remnant_distance=2, #drop pixels within this distance of remnant edge (km)
-               #region=c(xmin = 18.3, xmax = 19.3, ymin = -34.3, ymax = -33.3), #core
-               region=c(xmin = 0, xmax = 30, ymin = -36, ymax = -20), #whole region
-               #region=c(xmin = 18.301425, xmax = 18.524242, ymin = -34.565951, ymax = -34.055531), #peninsula
-               sample_proportion= sample_proportion_prediction,
-               long_pixels=long_pixels_predict)),
+  tar_target(envdata_predict, {
+               stable_data_parquet
+               tidy_static_data(
+                 envdata_files,
+                 remnant_distance = 2000, # metres from remnant edge (was 2 km)
+                 #region=c(xmin = 18.3, xmax = 19.3, ymin = -34.3, ymax = -33.3), #core
+                 region = c(xmin = 0, xmax = 30, ymin = -36, ymax = -20), #whole region
+                 #region=c(xmin = 18.301425, xmax = 18.524242, ymin = -34.565951, ymax = -34.055531), #peninsula
+                 sample_proportion = sample_proportion_prediction,
+                 long_pixels = long_pixels_predict)
+             }),
   tar_target(
     data_predicting,
     filter_training_data(envdata_predict,envvars)
@@ -236,7 +239,8 @@ list(
   tar_target(
     dyndata_predicting,
     tidy_dynamic_data(envdata_predict,
-                      date_window=ymd(predicting_window))
+                      date_window = ymd(predicting_window),
+                      envdata_files = envdata_files)
   ),
   tar_target(
     stan_data_predict,
