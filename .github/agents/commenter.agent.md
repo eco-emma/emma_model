@@ -33,6 +33,11 @@ biologist who is proficient in R but has not seen this specific codebase before.
   parquet with domain-specific columns) should have a one-line comment describing
   their structure.
 
+## Style
+When editing R, preserve [tidyverse style](https://style.tidyverse.org)
+(see `.github/instructions/r-style.instructions.md`). Do not introduce `=`
+assignment or `%>%` when adding comments.
+
 ## What to do
 Read the target file(s), then:
 1. List sections or lines that are underdocumented (with file + line reference).

@@ -124,6 +124,12 @@ For cluster deployment, use SLURM scripts:
 
 ## Development Conventions
 
+- **R style (required)**: Follow the [tidyverse style guide](https://style.tidyverse.org).
+  Prefer tidyverse idioms, native pipe `|>`, `<-` assignment, 2-space indent, 80-char
+  lines, and `snake_case`. Format with `styler` before committing
+  (`Rscript scripts/agents/tidyverse_check.R --fix`). See
+  [`.github/instructions/r-style.instructions.md`](.github/instructions/r-style.instructions.md)
+  and [`AGENTS.md`](AGENTS.md).
 - **Function files**: Each R function in `R/` is a single file (e.g., `R/create_stan_data.R`)
 - **No interactive execution**: Pipeline designed for batch execution via `targets::tar_make()`
 - **Debugging**: Use `tar_option_set(debug = "target_name")` to step into specific target

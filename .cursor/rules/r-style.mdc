@@ -1,0 +1,17 @@
+---
+description: Require tidyverse style for all R code
+globs: "**/*.{R,r,Rmd,rmd}"
+alwaysApply: false
+---
+
+# R Code Style
+
+Follow the [tidyverse style guide](https://style.tidyverse.org) for all R code.
+
+- Use tidyverse idioms (`dplyr`, `tidyr`, `purrr`, `ggplot2`, `readr`, `tibble`).
+- Native pipe `|>` (not `%>%`); assignment with `<-`.
+- 2-space indent; max line width 80; `snake_case` names.
+- Format with `styler` (tidyverse transformers) before committing.
+- Do not change behavior when restyling — formatting only.
+
+See also: `.github/instructions/r-style.instructions.md` and `AGENTS.md`.

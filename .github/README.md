@@ -1,0 +1,86 @@
+# GitHub Copilot Customisation
+
+This directory contains custom agents and always-on instructions for GitHub Copilot
+Chat in VS Code.
+
+---
+
+## Always-on instructions
+
+`instructions/r-style.instructions.md` — applied automatically to every `*.R` /
+`*.Rmd` file. Enforces the [tidyverse style guide](https://style.tidyverse.org),
+tidyverse idioms, script-style (top-to-bottom, minimal abstraction), and comment
+standards. No invocation needed. Format with `styler` before committing.
+
+---
+
+## Custom agents (`agents/`)
+
+Agents appear in the Copilot Chat agent picker (the mode selector next to the chat
+input). Select one from the dropdown, or type its name after `@` in the chat input.
+
+### How to invoke
+
+```
+@<agent-name> <your request>
+```
+
+Example:
+```
+@stats review R/create_stan_data.R for assumption violations
+@commenter document R/find_long_records.R
+@coder_alpha implement a helper that summarises VB draws
+```
+
+To run all three competing coders on the same problem, send the same prompt to each:
+```
+@coder_alpha implement X
+@coder_beta implement X
+@coder_gamma implement X
+```
+Then pick the best solution or synthesise across them.
+
+---
+
+## Agent reference
+
+### Review agents — read-only, raise issues for coders to fix
+
+| Agent | Invoke when you want to… |
+|---|---|
+| `@stats` | Check statistical assumptions, sample sizes, data leakage, uncertainty |
+| `@geo` | Metadata QA (CRS consistency, resolution mismatches, missing files) and spatial accuracy review |
+| `@science` | Get a peer-reviewer-style critique of analytical design and methods |
+| `@gh_actions` | Check that changes will run on GitHub Actions |
+| `@targets` | Check target dependencies, dynamic branching, format=file correctness |
+
+### Coding agents — produce working R code
+
+| Agent | Philosophy |
+|---|---|
+| `@coder_alpha` | Correctness-first: readable, conventional, explicit sanity checks |
+| `@coder_beta` | Performance-first: memory-efficient, chunk-based, parallelism-aware |
+| `@coder_gamma` | Minimalist: fewest lines, no abstraction, inline everything |
+
+### Documentation agent
+
+| Agent | Invoke when you want to… |
+|---|---|
+| `@commenter` | Review or add scientific comments, section headers, and unit annotations |
+
+### Orchestrator
+
+| Agent | Invoke when you want to… |
+|---|---|
+| `@ci` | Run a full pre-commit sweep: lint + geo + stats + gh_actions + targets |
+
+---
+
+## Typical workflows
+
+**Before committing:**
+```
+@ci
+# or locally:
+Rscript scripts/agents/tidyverse_check.R
+```

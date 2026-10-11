@@ -1,8 +1,12 @@
 ---
-applyTo: "**/*.R"
+applyTo: "**/*.{R,r,Rmd,rmd}"
 ---
 
 ## R Code Style
+
+Follow the [tidyverse style guide](https://style.tidyverse.org). Format with
+[`styler`](https://styler.r-lib.org) using tidyverse transformers before
+committing R changes. Restyling must not change program behavior.
 
 ### Tidyverse
 - Use tidyverse idioms: `dplyr`, `tidyr`, `purrr`, `ggplot2`, `readr`, `tibble`.
@@ -14,8 +18,11 @@ applyTo: "**/*.R"
   on the result of the previous one); prefer `purrr::map*` variants otherwise.
 
 ### Formatting
+- Use `<-` for assignment (not `=` at top level or inside function bodies for
+  binding names).
 - 2-space indentation. Max line width 80 characters.
 - One expression per line; do not chain unrelated operations onto one line.
+- `snake_case` for functions, arguments, and objects.
 
 ### Script style
 - Write linear, top-to-bottom scripts that read like a narrative of the analysis.
@@ -32,3 +39,12 @@ applyTo: "**/*.R"
 - Comment the scientific rationale, not just the mechanics
   (e.g., "# resample to match MODIS 500m grid" not "# resample raster").
 - Include units, CRS, and temporal coverage in comments wherever they are relevant.
+
+### Check / fix
+```r
+# Check (non-zero exit if unstyled):
+Rscript scripts/agents/tidyverse_check.R
+
+# Auto-fix:
+Rscript scripts/agents/tidyverse_check.R --fix
+```
