@@ -9,10 +9,13 @@ collect results, and produce a single summary report.
 
 ## Steps
 
-1. **Lint** — check R/ directory files for tidyverse style issues:
+1. **Lint** — check R sources against the
+   [tidyverse style guide](https://style.tidyverse.org) via `styler`:
    ```
    Rscript scripts/agents/tidyverse_check.R
    ```
+   Fail if any file needs restyling. Optionally fix with
+   `Rscript scripts/agents/tidyverse_check.R --fix` when the task is to apply style.
 2. **Geospatial review** — invoke the `geo` agent on `data/` and any spatial
    processing scripts that changed since the last commit.
 3. **Statistical checks** — invoke the `stats` agent on any modelling or
